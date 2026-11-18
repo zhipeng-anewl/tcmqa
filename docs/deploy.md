@@ -1,284 +1,138 @@
-# 部署到腾讯云
+# 部署手册（EdgeOne Pages）
 
-目标：让别人通过一个网址打开问答页面。
+线上跑的是**离线演示版**：把真实运行录下来的问答做成静态数据，前端回放。
 
-部署件都在 `deploy/` 目录，服务器上只需要 `cd deploy && bash deploy.sh`。
-
----
-
-## 一、买什么
-
-### 配置依据（实测，不是估算）
-
-| 组件 | 实测占用 |
-|---|---|
-| API 进程（两个模型都加载后） | **约 1.7 GB** 私有内存 |
-| Neo4j（1G 堆 + 512M 页缓存） | 约 0.4–1.5 GB |
-| 系统 + Docker | 约 0.5 GB |
-
-| 方案 | 配置 | 价格（约） | 说明 |
-|---|---|---|---|
-| **推荐** | 4 核 8G | ¥100–120/月 | 有余量，构建阶段也不容易 OOM |
-| 勉强 | 2 核 4G | ¥50–70/月 | `deploy.sh` 会检查内存；构建时建议临时加 swap |
-| 不可用 | 2 核 2G | — | 模型加载不起来 |
-
-> 价格随活动波动，以[轻量应用服务器控制台](https://cloud.tencent.com/product/lighthouse)为准。
-> 新用户首年常有 3–5 折，但要注意**续费价**。
-
-购买选项：
-
-- 地域：国内节点（上海 / 广州 / 北京），访问快但绑域名要备案
-- 镜像：**Ubuntu 22.04 LTS**
-- 系统盘：默认 80G 够用（镜像约 5G + 数据约 0.3G）
-- 带宽：3–5 Mbps 够（首屏约 400KB）
+访客看到的是完整界面、真实回答、真实证据与图谱、真实的耗时和 token 数——
+但这些数据是提前录好的，**不再调用模型**。所以不需要服务器、数据库和模型，
+一个纯静态托管就够。
 
 ---
 
-## 二、开放端口
+## 一、为什么部署静态版
 
-轻量控制台 →「防火墙」，只需要三条：
-
-| 端口 | 用途 |
-|---|---|
-| 22 | SSH |
-| 80 | Caddy 入口（`SITE_ADDRESS=:80` 时用它验收） |
-| 443 | 有域名后 HTTPS |
-
-生产 compose **不会**把 8000、7474、7687 暴露到公网——API 只绑 `127.0.0.1`，Neo4j 在容器内网，外部统一走 Caddy。
-
----
-
-## 三、本机准备部署包
-
-```powershell
-# 项目根目录
-powershell -ExecutionPolicy Bypass -File .\scripts\export_deploy.ps1 -SkipModels
-```
-
-产出（`deploy/` 下）：
-
-| 路径 | 内容 | 大小（实测） |
+| | 静态演示版 | 真服务（Neo4j + 模型） |
 |---|---|---|
-| `backup/neo4j.dump` | 图谱 | **64.6 MB** |
-| `data/index/` | 向量 + BM25 索引 | 11 MB |
-| `data/images/` | 药材封面与图库缩略图 | 40 MB |
-| `data/*.json` | 中文病名映射等运行期数据 | < 1 MB |
-| `data/cache/hf/` | 模型权重 | 1.5 GB（`-SkipModels` 可跳过） |
-| `media/mol/` | 分子结构图 | 168 MB（`-SkipMol` 可跳过） |
+| 打开速度 | 秒开（CDN） | 首次要加载模型，十几秒 |
+| 可用性 | 不会挂 | 机器/进程/数据库任一环节出问题就不可用 |
+| 成本 | ¥0 | 4 核 8G 起，¥400–600/年 |
+| 备案 | 平台默认域名不需要 | 国内节点绑域名必须备案 |
+| 限制 | 只能点录制好的问题 | 可自由提问 |
 
-**关于模型缓存**：跳过的话，服务器首次启动会自己从 `hf-mirror.com` 下载约 700MB，之后落在数据卷里不再重复下载。上传快、首启慢；传了则相反。按网络情况选。
-
-> 脚本会**自动停掉本机 Neo4j 再导出、导完重新拉起**，因为 `neo4j-admin dump` 要求数据库离线。
+简历/作品集场景下，"点开就能看到"比"能自由提问"更重要。
+真要展示自由提问，面试时用本机跑一遍更有说服力。
 
 ---
 
-## 四、上传
+## 二、生成部署包
 
-总共约 **120 MB**（不含模型缓存）。
+先在本机把服务跑起来（需要 Neo4j + API + 模型），然后录数据。
 
 ```bash
-# 代码（在开发机的 WSL / Git Bash 里执行）
-rsync -avz --progress \
-  --exclude 'data/cache' --exclude 'frontend/node_modules' \
-  --exclude 'frontend/dist' --exclude '.git' --exclude '__pycache__' \
-  ./ root@<服务器IP>:/opt/tcmqa/
+# 1) 录真实问答
+python scripts/export_demo_fixtures.py     # 16 条问答 + 首页统计 + 实体 + 识药结果
+python scripts/fix_demo_nodes.py           # 统一节点命名、生成图谱搜索索引
+python scripts/export_demo_media.py        # 抽出被引用的图片（约 1.8 MB，72 张）
 
-# 部署数据
-rsync -avz --progress \
-  deploy/data deploy/backup \
-  root@<服务器IP>:/opt/tcmqa/deploy/
+# 2) 构建静态包
+cd frontend
+npm run build:demo                         # → dist-demo/
 ```
 
-如果用 `-SkipModels` 跳过了模型，就没有 `deploy/media`，上面第二条命令照抄即可。
+产物大小：**约 3.4 MB / 115 个文件**。
+
+> 想换问题：改 `scripts/export_demo_fixtures.py` 里的 `QUESTIONS` 列表，重跑上面三条命令。
+> `demo/index.json` 与页面上的示例按钮会自动跟着更新。
 
 ---
 
-## 五、服务器上配置
+## 三、部署到 EdgeOne Pages
 
-### 1. 装 Docker
+控制台：<https://console.cloud.tencent.com/edgeone/makers>
 
-```bash
-ssh root@<服务器IP>
-curl -fsSL https://get.docker.com | sh
-systemctl enable --now docker
+### 方式 A：导入 Git 仓库（推荐，改了自动重新部署）
 
-# 国内拉镜像慢的话配个加速器
-mkdir -p /etc/docker
-cat > /etc/docker/daemon.json <<'EOF'
-{ "registry-mirrors": ["https://mirror.ccs.tencentyun.com"] }
-EOF
-systemctl restart docker
-```
+1. 代码已经在 GitHub 上（`zhipeng-anewl/tcmqa`）
+2. 控制台 → 新建项目 → **导入 Git 仓库** → 授权并选择该仓库
+3. 构建配置填：
 
-### 2. 填环境变量
+   | 项 | 值 |
+   |---|---|
+   | 根目录 | `frontend` |
+   | 构建命令 | `npm ci && npm run build:demo` |
+   | 输出目录 | `dist-demo` |
 
-```bash
-cd /opt/tcmqa/deploy
-cp .env.example .env
-vim .env
-```
+4. 部署，拿到平台分配的访问地址
 
-必填三项：
+### 方式 B：直接上传（不想连 Git 时最快）
 
-```ini
-DEEPSEEK_API_KEY=sk-你的key        # 建议单独申请一张，设消费限额
-NEO4J_PASSWORD=换成强密码          # 首次初始化后别再改
-SITE_ADDRESS=:80                   # 先验收；有域名后改成你的域名
-```
+1. 把 `frontend/dist-demo` 整个目录打成 zip
+2. 打开 <https://makers.edgeone.link/drop>，拖进去
+3. 几秒后拿到地址
 
-可选（成本控制，默认已开）：
-
-```ini
-RATE_LIMIT_PER_MINUTE=6            # 单 IP 每分钟问答次数，0 关闭
-DAILY_CHAT_LIMIT=800               # 全站每日上限，0 不限额
-```
-
-### 3. 一键部署
-
-```bash
-bash deploy.sh
-```
-
-脚本会依次做：检查 docker / 检查 `.env` 是否填了真 key / 检查 dump 与索引是否就位 / 检查内存 / 构建并启动 / 轮询健康接口。
-
-首次构建 **5–10 分钟**（下载 torch CPU 版与 Python 依赖）。
-
-### 4. 图谱是怎么进去的
-
-不需要手动导入。compose 里有个 `neo4j-init` 一次性容器：
-
-```
-neo4j-init（读 /backup/neo4j.dump → 写入 neo4j_data 卷 → 退出）
-        ↓ service_completed_successfully
-neo4j（用同一个卷启动，库里已经有数据）
-        ↓ service_healthy（cypher-shell 真跑一条查询）
-api（连上去）
-```
-
-因为 `neo4j-admin database load` 要求数据库离线，所以单独用一个容器在 neo4j 启动前完成，而不是塞进 entrypoint。
-
-验证：
-
-```bash
-docker compose -f docker-compose.prod.yml exec neo4j \
-  cypher-shell -u neo4j -p '你的密码' "MATCH (n) RETURN count(n) AS nodes"
-# 期望：32167
-```
+缺点：以后更新要手动重传。
 
 ---
 
-## 六、验收
+## 四、加速区域与备案（重要）
 
-浏览器打开 `http://<服务器IP>`（80 端口，走 Caddy）。
+EdgeOne Pages 的第一个坑就在这里，先看清楚再决定：
 
-也可以直接探接口：
+| 加速区域 | 国内访问 | 需要什么 |
+|---|---|---|
+| **不含中国大陆** | 平台默认域名在国内会返回 **401** | 无需备案，但国内打不开 |
+| **中国大陆** | 正常 | 必须**绑定已备案的自定义域名** |
+
+也就是说：**想让国内的人打开，最终还是要一个备案过的域名**，这一步绕不过去。
+平台分配的默认子域名只能用于海外访问，或者短期预览。
+
+### 备案流程（约 2–3 周）
+
+1. 买域名（¥30–80/年）
+2. 腾讯云控制台 → 备案 → 提交主体信息（身份证 + 手机核验）
+3. 腾讯云初审 1–2 个工作日
+4. 管局审核 5–20 个工作日
+5. 通过后：EdgeOne 项目 → 域名管理 → 绑定自定义域名 → CNAME 解析
+
+证书由平台自动签发与续期，不用自己处理。
+
+### 备案期间怎么办
+
+- 用 GitHub Pages 之类免备案托管先顶着（国内访问不稳但多数能开）
+- 或者在简历上直接放：仓库地址 + 演示视频
+
+---
+
+## 五、更新线上版本
 
 ```bash
-curl http://<服务器IP>/api/health
+# 改了问题或回答措辞
+python scripts/export_demo_fixtures.py
+cd frontend && npm run build:demo
+git add -A && git commit -m "update demo" && git push
 ```
 
-> 第一次提问会慢：API 在首次请求时加载模型（如果没传缓存，还要先下载 700MB）。之后重启从数据卷读取，快很多。
+Git 方式接好之后，push 就会自动重新构建部署。
 
 ---
 
-## 七、绑域名 + HTTPS
+## 六、常见问题
 
-1. 域名控制台加 A 记录：`你的域名 → 服务器公网 IP`
-2. `deploy/.env` 里改 `SITE_ADDRESS=你的域名`
-3. 重启 Caddy：`docker compose -f docker-compose.prod.yml up -d caddy`
+**构建失败：找不到 `demo/index.json`**
+`frontend/demo-public/demo/` 没提交。检查 `git ls-files frontend/demo-public | head`。
 
-Caddy 会自动申请并续期 Let's Encrypt 证书，直接访问 `https://你的域名`。
+**页面能打开，但图片全是裂图**
+演示数据里的图片地址是后端风格的 `/media/...`。部署在子路径时必须补 base 前缀，
+`src/demo/index.js` 里的 `withBase()` 负责这件事；如果改了部署路径，检查 `VITE_BASE`。
 
-**注意** `deploy/Caddyfile` 里的 `flush_interval -1`：这是让流式回答逐字输出的关键。少了它，回答会攒成一大段一次性蹦出来。
-
-### ICP 备案
-
-国内服务器绑域名**必须备案**：
-
-1. 腾讯云控制台 →「备案」→ 提交主体信息（身份证 + 手机核验）
-2. 腾讯云初审：1–2 个工作日
-3. 管局审核：约 5–20 个工作日
-
-备案期间用 `http://IP` 直接演示，不影响。备案通过后再切域名。
-
----
-
-## 八、日常运维
-
+**页面空白，控制台报 404 一堆 JS**
+部署在子路径（如 `/<repo>/`）却没设 `VITE_BASE`。本地验证：
 ```bash
-cd /opt/tcmqa/deploy
-
-# 看日志
-docker compose -f docker-compose.prod.yml logs -f api
-
-# 更新代码后重建
-git pull && docker compose -f docker-compose.prod.yml up -d --build api
-
-# 资源占用
-docker stats --no-stream
-
-# 备份图谱
-docker compose -f docker-compose.prod.yml exec neo4j \
-  neo4j-admin database dump neo4j --to-path=/data/backup
+VITE_BASE=/tcmqa/ npm run build:demo
 ```
 
----
+**输入没录过的问题怎么答**
+会提示"这是离线演示版"，并列出可点击的示例——不假装能答，这是有意设计。
 
-## 九、排错
-
-**构建时容器被杀（exit 137）**
-内存不足。加 swap：
-
-```bash
-fallocate -l 4G /swapfile && chmod 600 /swapfile
-mkswap /swapfile && swapon /swapfile
-```
-
-**回答不是逐字出现，而是几秒后一次性出来**
-反代缓冲了。确认走的是 `deploy/Caddyfile`（带 `flush_interval -1`），并且没有在它前面再套一层会缓冲的代理。
-
-**api 一直 unhealthy**
-看 `docker compose -f docker-compose.prod.yml logs api`：
-
-- `.env` 里 `NEO4J_URI` 写成 `localhost` 了（容器内要用 `bolt://neo4j:7687`，compose 已自动注入）
-- 模型下载失败：检查服务器出网和 `HF_ENDPOINT`
-- 索引缺失：`deploy/data/index` 没传上去
-
-**neo4j-init 失败，neo4j 起不来**
-`deploy/backup/neo4j.dump` 没传或文件名不对。看 `docker compose ... logs neo4j-init`。
-确认要重来时：`docker compose -f docker-compose.prod.yml down -v` 清卷再跑。
-
-**图片全 404**
-`deploy/data/images` 没传。检查 `ls /opt/tcmqa/deploy/data/images/covers | head`。
-
-**改了 NEO4J_PASSWORD 后连不上**
-密码只在**首次初始化**时写进库。已经初始化过再改 `.env`，容器里的库还是旧密码——要么改回去，要么 `down -v` 重来（数据会从 dump 重新导入，所以是安全的）。
-
----
-
-## 十、成本
-
-| 项 | 费用 |
-|---|---|
-| 轻量 4C8G | ¥100–120/月（首年常有优惠） |
-| 域名 | ¥30–80/年 |
-| 备案 | 免费 |
-| LLM API | ¥0.006 / 次（DeepSeek） |
-| 流量 | 轻量自带月流量包，个人演示够用 |
-
-成本失控的主要风险是**别人刷你的 LLM key**，所以 `.env` 里默认开了 `RATE_LIMIT_PER_MINUTE` 与 `DAILY_CHAT_LIMIT`，并且建议用一张单独的、设了限额的 key。
-
----
-
-## 附：不买服务器的临时方案
-
-只想让人看一眼的话，本机跑着 + 内网穿透，零成本：
-
-```powershell
-.\start.ps1
-# 另开一个窗口
-cloudflared tunnel --url http://127.0.0.1:8000
-# 输出的 https://xxx.trycloudflare.com 就能发出去
-```
-
-限制：电脑关了就失效，本机 Neo4j 必须一直开着。适合面试时现场演示，不适合写进简历当长期链接。
+**想让访客自由提问**
+那就得回到真服务：Neo4j + API + 模型，一台 4 核 8G 的服务器起步，
+国内还要备案域名。成本与运维复杂度都会上一个量级。

@@ -171,8 +171,6 @@ D:\neo4j\neo4j-community-5.26.12-windows\neo4j-community-5.26.12\bin\neo4j.bat c
 python -m uvicorn tcmqa.main:app --port 8000
 ```
 
-打开 <http://127.0.0.1:8000>，接口文档在 <http://127.0.0.1:8000/docs>。
-
 ### 前端（Vue3）
 
 `frontend/` 是前端工程（Vue3 + Vite），项目不再保留旧版原生 JS 页面。
@@ -181,7 +179,7 @@ python -m uvicorn tcmqa.main:app --port 8000
 cd frontend
 npm install
 npm run dev       # http://localhost:5173 ，/api 与 /media 自动代理到 8000
-npm run build     # 产出 frontend/dist，刷新 http://127.0.0.1:8000 即可看到新版本
+npm run build     # 产出 frontend/dist，后端直接托管，重新构建后不需要重启 API
 ```
 
 后端直接托管 `frontend/dist`（`StaticFiles` 每次请求读盘，**重新构建后不需要重启 API**）。
@@ -201,12 +199,6 @@ frontend/src/
 └── assets/style.css     宣纸色系设计变量与全部样式
 ```
 
-> **PowerShell 的两个坑**（都踩过）：
-> 1. 默认执行策略禁止运行未签名脚本 → 用 `start.bat`（内置 `-ExecutionPolicy Bypass`），
->    或执行 `powershell -ExecutionPolicy Bypass -File .\start.ps1`；
-> 2. PowerShell 5.1 按 ANSI 读取 `.ps1`，**UTF-8 无 BOM 的中文字符串会被解码坏**并报「字符串缺少结束符」——
->    仓库里的 `.ps1` 均为 UTF-8 with BOM，改动时别丢 BOM。
-
 ### 5. 验证
 
 ```bash
@@ -220,18 +212,22 @@ python scripts/run_eval.py       # 金标集评测，产出报告
 
 ## 部署上线
 
-三条路线，按场景选，完整步骤见 [部署手册](docs/deploy.md)：
+线上展示的是**离线演示版**：把真实运行产生的问答录成静态数据，前端回放。
+访客点开链接能看到完整界面、真实回答、真实证据与图谱，但不再调用模型——
+因此不需要服务器、数据库和 GPU，纯静态托管即可。
 
-| 场景 | 命令 | 结果 |
-| --- | --- | --- |
-| 同一局域网演示 | `start.bat -Public` | `http://内网IP:8000`，手机可直接打开 |
-| 临时公网链接（面试前发一条） | `powershell -File scripts\share.ps1` | `https://xxx.trycloudflare.com`，进程关掉即失效 |
-| 云服务器长期在线 | `scripts\export_deploy.ps1` + `deploy/deploy.sh` | `https://域名`，Docker Compose 三件套 |
+```bash
+# 1) 本机把服务跑起来，把真实问答录成 fixture
+python scripts/export_demo_fixtures.py     # 16 条问答 + 首页统计 + 节点 + 识药结果
+python scripts/fix_demo_nodes.py           # 统一节点命名 + 生成搜索索引
+python scripts/export_demo_media.py        # 抽出被引用的图片（约 1.8 MB）
 
-生产部署的结构：Caddy（自动 HTTPS / SSE 透传）→ FastAPI → Neo4j，
-数据（图谱 dump、检索索引、图片、模型缓存）与代码分离，由 `export_deploy.ps1` 整理、rsync 上传。
-公网入口内置限流（单 IP 6 次/分、全站 800 次/天），避免用自己的 key 跑演示时成本失控——
-一次问答约 3 次 LLM 调用、¥0.006，800 次/天 ≈ ¥5。
+# 2) 构建静态包
+cd frontend && npm run build:demo          # 产出 dist-demo/（约 3.4 MB）
+```
+
+把 `frontend/dist-demo` 发布到 **EdgeOne Pages** 即完成上线：
+构建命令 `npm run build:demo`、输出目录 `dist-demo`。完整步骤见 [部署手册](docs/deploy.md)。
 
 ---
 
@@ -267,10 +263,9 @@ tcmqa/
 └── eval/                金标集、指标、执行器、报告渲染
 
 frontend/                Vue3 + Vite 前端（src/components、stores、utils）
-scripts/                 build_index · run_eval · test_api · smoke · 数据探查 · export_deploy · share
-deploy/                  生产部署：docker-compose.prod.yml · Caddyfile · deploy.sh
+scripts/                 build_index · run_eval · test_api · smoke · 数据探查 · 演示数据导出
 tests/                   pytest 单元测试
-docs/                    架构设计 / 评测报告 / 面试准备
+docs/                    架构设计 / 评测报告 / 部署手册
 data/                    金标集、索引、SQLite
 ```
 
@@ -414,8 +409,7 @@ RRF 只用排名，`score = Σ 1/(60 + rank)`，换数据集不用重标定。
 ## 文档
 
 - [架构设计](docs/architecture.md) — 时序图、数据模型、每个选型的权衡
-- [部署手册](docs/deploy.md) — 局域网 / 公网临时链接 / 云服务器三条路线
+- [部署手册](docs/deploy.md) — 生成离线演示包并发布到 EdgeOne Pages
 - [评测报告](docs/eval_report.md) — 最新一次全量评测
 - [消融实验](docs/ablation.md) — 各模块贡献的量化分析
 - [多模态检索](docs/multimodal.md) — Chinese-CLIP、α 扫描、leave-one-out 评测
-- [面试准备](docs/interview.md) — 简历怎么写、2 分钟自述、32 个高频追问
