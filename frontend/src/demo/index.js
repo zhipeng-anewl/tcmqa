@@ -15,6 +15,26 @@ export const isDemo = import.meta.env.VITE_DEMO === 'true'
 /* demo 里能查的实体，用于拼错误提示 */
 let searchIndex = null
 
+/**
+ * 演示数据里的图片地址是后端风格的根路径（/media/covers/xxx.webp）。
+ * 部署到子路径（GitHub Pages 的 /<repo>/）时必须补上前缀，否则会去根域找图。
+ */
+function withBase(url) {
+  if (!url || BASE === '/') return url
+  return url.startsWith('/') ? `${BASE.replace(/\/$/, '')}${url}` : url
+}
+
+/** 批量给结果里的图片字段补前缀 */
+function prefixMedia(items, fields) {
+  return (items || []).map((it) => {
+    const copy = { ...it }
+    for (const f of fields) {
+      if (typeof copy[f] === 'string' && copy[f]) copy[f] = withBase(copy[f])
+    }
+    return copy
+  })
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -132,15 +152,23 @@ export async function demoApi(path) {
     const missing = []
     for (const n of names) {
       const hit = data.items[n] || data.items[n.toLowerCase()]
-      if (hit) items[n] = hit
-      else missing.push(n)
+      if (hit) {
+        items[n] = {
+          ...hit,
+          thumb: withBase(hit.thumb),
+          orig: withBase(hit.orig),
+        }
+      } else {
+        missing.push(n)
+      }
     }
     return { items, missing }
   }
 
   if (p === 'api/vision/search-text') {
     // 两个录好的示例：含「红」走第一个，其余走第二个
-    return getJSON(q.includes('红') ? 'demo/vision/t1.json' : 'demo/vision/t2.json')
+    const data = await getJSON(q.includes('红') ? 'demo/vision/t1.json' : 'demo/vision/t2.json')
+    return { ...data, results: prefixMedia(data.results, ['cover', 'thumb']) }
   }
 
   throw new Error('演示版不包含这个操作')

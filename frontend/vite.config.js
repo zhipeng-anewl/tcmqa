@@ -7,6 +7,9 @@ import vue from '@vitejs/plugin-vue'
 // Element Plus 不走自动引入插件：见 src/plugins/element-components.js 的说明。
 export default defineConfig(({ mode }) => ({
   plugins: [vue()],
+  // 部署到子路径时必须改 base，否则 JS/CSS 全 404。
+  // GitHub Pages 的地址是 https://<user>.github.io/<repo>/，工作流里会传 VITE_BASE=/<repo>/
+  base: process.env.VITE_BASE || '/',
   // 演示版把录好的 fixture 和图片放在 demo-public/，正常构建不带上它们
   publicDir: mode === 'demo' ? 'demo-public' : 'public',
   server: {
