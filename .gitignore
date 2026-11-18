@@ -30,8 +30,10 @@ frontend/dist/
 .idea/
 .DS_Store
 
-# ---- 本地调试产物（截图/构建脚本用） ----
-.chrome-profile/
+# ---- 本地调试产物（截图/构建/浏览器配置） ----
+# 注意 .chrome-profile* 一定要用通配符：CDP 脚本用的是 .chrome-profile-cdp，
+# 只写 .chrome-profile/ 会漏掉，导致浏览器 Cookie/历史被提交进仓库
+.chrome-profile*/
 .tmp-build/
 .tmp-pages/
 shot-*.png
@@ -52,6 +54,14 @@ deploy/media/
 /welcome.html
 /HTML语法规则.md
 /vscode快捷键.md
+
+# ---- 已从项目移除的旧文件（保留在本地，不再进仓库）----
+# 部署方案改为 EdgeOne Pages 静态演示版后，服务器部署那一套不再使用
+/deploy/
+/scripts/share.ps1
+/scripts/export_deploy.ps1
+/.github/workflows/pages.yml
+/docs/interview.md
 
 # ---- 演示版构建产物（demo-public/ 里的 fixture 要提交，构建结果不提交）----
 frontend/dist-demo/
