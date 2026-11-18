@@ -1,0 +1,50 @@
+# 本地开发用：Neo4j + 问答 API
+#
+# ⚠️ 生产部署不要用这个文件，用 deploy/docker-compose.prod.yml：
+#    那个版本会从 deploy/backup/neo4j.dump 导入图谱、只暴露 Caddy 的 80/443、
+#    并开了限流。详见 docs/deploy.md
+#
+# 本文件起的 neo4j 是**空库**，只适合已经知道怎么导数据的场景。
+# 日常开发更推荐直接用本机的 Neo4j（start.ps1 会拉起），不需要容器。
+
+name: tcmqa-dev
+
+services:
+  neo4j:
+    image: neo4j:5.26-community
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-changeme}
+      NEO4J_server_memory_heap_initial__size: 1G
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 512M
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  api:
+    build: .
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:

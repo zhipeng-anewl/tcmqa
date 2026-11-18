@@ -1,0 +1,21 @@
+**/__pycache__/
+**/*.py[cod]
+.venv/
+venv/
+.git/
+.idea/
+frontend/node_modules/
+frontend/dist/
+pytest-cache-files-*/
+
+# 运行期数据由 compose 挂载，不进镜像（否则构建上下文 1.6GB+）
+data/index/
+data/cache/
+data/images/
+data/app.db
+data/app.db-wal
+data/app.db-shm
+data/*.json
+data/*.jsonl
+!data/golden_set.jsonl
+docs/screenshots/

@@ -1,0 +1,57 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---- 密钥与本地配置 ----
+.env
+.env.local
+
+# ---- 生成物（可重建） ----
+data/index/
+data/cache/
+data/images/
+data/app.db
+data/app.db-wal
+data/app.db-shm
+data/eval_last.json
+data/ablation_*.json
+
+# ---- 前端 ----
+frontend/node_modules/
+frontend/dist/
+
+# ---- 工具 ----
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.DS_Store
+
+# ---- 本地调试产物（截图/构建脚本用） ----
+.chrome-profile/
+.tmp-build/
+shot-*.png
+
+# ---- 部署产物（由脚本生成，按机器不同）----
+deploy/.env
+deploy/backup/
+deploy/data/
+deploy/media/
+
+# ---- 本地遗留 / 个人笔记（保留在本地，不随仓库发布）----
+# app.py 等是 tcmqa/ 之前的早期实现，已被取代
+/app.py
+/graph_qa.py
+/llm.py
+/config.py
+/view_graph.py
+/welcome.html
+/HTML语法规则.md
+/vscode快捷键.md
+
+# ---- 演示版构建产物（demo-public/ 里的 fixture 要提交，构建结果不提交）----
+frontend/dist-demo/
+.tools/

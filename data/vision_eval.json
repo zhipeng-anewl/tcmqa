@@ -1,0 +1,103 @@
+{
+  "queries": 400,
+  "images_indexed": 2875,
+  "herbs_indexed": 502,
+  "model": "OFA-Sys/chinese-clip-vit-base-patch16",
+  "top1": 0.5075,
+  "top3": 0.65,
+  "top5": 0.7075,
+  "mrr": 0.5857,
+  "elapsed_sec": 62.9,
+  "failed_examples": [
+    {
+      "query": "HER0001_6.webp",
+      "true": "矮地茶",
+      "predicted": [
+        "白术",
+        "白薇",
+        "鹅不食草"
+      ]
+    },
+    {
+      "query": "HER0003_1.webp",
+      "true": "安息香",
+      "predicted": [
+        "穿山龙",
+        "大风子",
+        "菝葜"
+      ]
+    },
+    {
+      "query": "HER0004_4.webp",
+      "true": "八角茴香",
+      "predicted": [
+        "大风子",
+        "络石藤",
+        "丁公藤"
+      ]
+    },
+    {
+      "query": "HER0010_1.webp",
+      "true": "白附子",
+      "predicted": [
+        "浙贝母",
+        "穿山龙",
+        "山柰"
+      ]
+    },
+    {
+      "query": "HER0013_1.webp",
+      "true": "白花蛇舌草",
+      "predicted": [
+        "半边莲",
+        "半枝莲",
+        "瞿麦"
+      ]
+    },
+    {
+      "query": "HER0015_3.webp",
+      "true": "白蔹",
+      "predicted": [
+        "白芍",
+        "菝葜",
+        "冰片"
+      ]
+    },
+    {
+      "query": "HER0017_1.webp",
+      "true": "白毛夏枯草",
+      "predicted": [
+        "牛大力",
+        "香附",
+        "冬虫夏草"
+      ]
+    },
+    {
+      "query": "HER0019_3.webp",
+      "true": "白前",
+      "predicted": [
+        "龙葵",
+        "龙胆",
+        "三分三"
+      ]
+    },
+    {
+      "query": "HER0024_6.webp",
+      "true": "白薇",
+      "predicted": [
+        "独活",
+        "白术",
+        "川芎"
+      ]
+    },
+    {
+      "query": "HER0025_10.webp",
+      "true": "白鲜皮",
+      "predicted": [
+        "罗布麻叶",
+        "甘松",
+        "草苁蓉"
+      ]
+    }
+  ]
+}

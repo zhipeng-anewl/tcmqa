@@ -1,0 +1,213 @@
+[
+ {
+  "ingredient": "glycyrrhizin",
+  "ingredient_id": "MOL004932",
+  "name_zh": "甘草酸",
+  "molecular_weight": 823.04,
+  "targets": 6,
+  "herbs_containing": 1,
+  "source_herbs": [
+   "甘草"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有glycyrrhizin吗？"
+ },
+ {
+  "ingredient": "berberine",
+  "ingredient_id": "MOL001454",
+  "name_zh": "小檗碱",
+  "molecular_weight": 336.39,
+  "targets": 17,
+  "herbs_containing": 12,
+  "source_herbs": [
+   "白屈菜",
+   "白药子",
+   "大枣"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有berberine吗？"
+ },
+ {
+  "ingredient": "artemisinin",
+  "ingredient_id": "MOL007424",
+  "name_zh": "青蒿素",
+  "molecular_weight": 282.37,
+  "targets": 7,
+  "herbs_containing": 1,
+  "source_herbs": [
+   "青蒿"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有artemisinin吗？"
+ },
+ {
+  "ingredient": "tanshinone iia",
+  "ingredient_id": "MOL007154",
+  "name_zh": "丹参酮IIA",
+  "molecular_weight": 294.37,
+  "targets": 28,
+  "herbs_containing": 2,
+  "source_herbs": [
+   "丹参",
+   "前胡"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有tanshinone iia吗？"
+ },
+ {
+  "ingredient": "salvianolic acid b",
+  "ingredient_id": "MOL007074",
+  "name_zh": "丹酚酸B",
+  "molecular_weight": 718.66,
+  "targets": 0,
+  "herbs_containing": 1,
+  "source_herbs": [
+   "丹参"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有salvianolic acid b吗？"
+ },
+ {
+  "ingredient": "saikosaponin a",
+  "ingredient_id": "MOL004635",
+  "name_zh": "柴胡皂苷A",
+  "molecular_weight": 781.1,
+  "targets": 2,
+  "herbs_containing": 1,
+  "source_herbs": [
+   "柴胡"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有saikosaponin a吗？"
+ },
+ {
+  "ingredient": "paeoniflorin",
+  "ingredient_id": "MOL001924",
+  "name_zh": "芍药苷",
+  "molecular_weight": 480.51,
+  "targets": 2,
+  "herbs_containing": 3,
+  "source_herbs": [
+   "升麻",
+   "赤芍",
+   "白芍"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有paeoniflorin吗？"
+ },
+ {
+  "ingredient": "matrine",
+  "ingredient_id": "MOL005944",
+  "name_zh": "苦参碱",
+  "molecular_weight": 248.41,
+  "targets": 3,
+  "herbs_containing": 5,
+  "source_herbs": [
+   "菟丝子",
+   "山豆根",
+   "苦参"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有matrine吗？"
+ },
+ {
+  "ingredient": "oxymatrine",
+  "ingredient_id": "MOL006634",
+  "name_zh": "氧化苦参碱",
+  "molecular_weight": 264.41,
+  "targets": 0,
+  "herbs_containing": 2,
+  "source_herbs": [
+   "苦参",
+   "北豆根"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有oxymatrine吗？"
+ },
+ {
+  "ingredient": "Aconitine",
+  "ingredient_id": "MOL002424",
+  "name_zh": "乌头碱",
+  "molecular_weight": 645.82,
+  "targets": 0,
+  "herbs_containing": 1,
+  "source_herbs": [
+   "附子"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有Aconitine吗？"
+ },
+ {
+  "ingredient": "Ligustilide",
+  "ingredient_id": "MOL011782",
+  "name_zh": "藁本内酯",
+  "molecular_weight": 190.26,
+  "targets": 2,
+  "herbs_containing": 3,
+  "source_herbs": [
+   "蒿本",
+   "升麻",
+   "藁本"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有Ligustilide吗？"
+ },
+ {
+  "ingredient": "curcumin",
+  "ingredient_id": "MOL002581",
+  "name_zh": "姜黄素",
+  "molecular_weight": 368.41,
+  "targets": 5,
+  "herbs_containing": 3,
+  "source_herbs": [
+   "高良姜",
+   "罗汉果",
+   "郁金"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有curcumin吗？"
+ },
+ {
+  "ingredient": "resveratrol",
+  "ingredient_id": "MOL012744",
+  "name_zh": "白藜芦醇",
+  "molecular_weight": 228.26,
+  "targets": 49,
+  "herbs_containing": 3,
+  "source_herbs": [
+   "虎杖",
+   "桑白皮",
+   "土茯苓"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有resveratrol吗？"
+ },
+ {
+  "ingredient": "puerarin",
+  "ingredient_id": "MOL012297",
+  "name_zh": "葛根素",
+  "molecular_weight": 416.41,
+  "targets": 26,
+  "herbs_containing": 5,
+  "source_herbs": [
+   "柴胡",
+   "川牛膝",
+   "葛花"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有puerarin吗？"
+ },
+ {
+  "ingredient": "notoginsenoside r1",
+  "ingredient_id": "MOL012851",
+  "name_zh": "三七皂苷R1",
+  "molecular_weight": 933.27,
+  "targets": 1,
+  "herbs_containing": 1,
+  "source_herbs": [
+   "竹节参"
+  ],
+  "in_ginseng": false,
+  "question": "人参含有notoginsenoside r1吗？"
+ }
+]
